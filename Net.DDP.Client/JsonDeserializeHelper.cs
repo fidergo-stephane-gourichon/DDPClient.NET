@@ -22,9 +22,9 @@ namespace Net.DDP.Client
 			Debug.WriteLine ("Raw message: " + jsonItem);
 			JObject jObj = JObject.Parse(jsonItem);
 
-			if (jObj[DDPClient.DDP_PROPS_ERROR] != null || jObj[DDPClient.DDP_PROPS_MESSAGE] != null && jObj[DDPClient.DDP_PROPS_MESSAGE].ToString() == "error")
+			if (jObj[DDPClient.DDP_PROPS_MESSAGE] != null && jObj[DDPClient.DDP_PROPS_MESSAGE].ToString() == "error")
 				HandleError(jObj[DDPClient.DDP_PROPS_ERROR] ?? jObj);
-			else if (jObj[DDPClient.DDP_PROPS_MESSAGE] != null)
+			else
 				HandleSubResult(jObj);
 		}
 
@@ -55,31 +55,38 @@ namespace Net.DDP.Client
 		{
 			dynamic entity = new ExpandoObject();
 
-			if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_ADDED) {
+			if (jObj [DDPClient.DDP_PROPS_MESSAGE] == null) {
+				// The server can actually return messages without the message property. Those should be ignored.
+				return;
+			}
+
+			var message = jObj [DDPClient.DDP_PROPS_MESSAGE].ToString ();
+
+			if (message == DDPClient.DDP_MESSAGE_TYPE_ADDED) {
 				entity = GetMessageData (jObj);
 				entity.Type = DDPType.Added;
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_CHANGED) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_CHANGED) {
 				entity = GetMessageData (jObj);
 				entity.Type = DDPType.Changed;
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_NOSUB) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_NOSUB) {
 				HandleError (jObj [DDPClient.DDP_PROPS_ERROR]);
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_READY) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_READY) {
 				entity.RequestsIds = ((JArray)jObj [DDPClient.DDP_PROPS_SUBS]).Select (id => id.Value<int> ()).ToArray ();
 				entity.Type = DDPType.Ready;
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_REMOVED) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_REMOVED) {
 				entity = GetMessageData (jObj);
 				entity.Type = DDPType.Removed;
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_RESULT) {
-				entity = GetMessageDataRecursive ((JObject)jObj [DDPClient.DDP_PROPS_RESULT]);
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_RESULT) {
+				entity = GetMessageDataRecursive (jObj);
 				entity.Type = DDPType.MethodResult;
 				entity.RequestingId = jObj [DDPClient.DDP_PROPS_ID].ToString ();
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_UPDATED) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_UPDATED) {
 				entity.Methods = jObj [DDPClient.DDP_PROPS_METHODS].Select (id => id.Value<int> ()).ToList ();
 				entity.Type = DDPType.Updated;
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_CONNECTED) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_CONNECTED) {
 				entity.Session = jObj [DDPClient.DDP_PROPS_SESSION].ToString();
 				entity.Type = DDPType.Connected;
-			} else if (jObj [DDPClient.DDP_PROPS_MESSAGE].ToString () == DDPClient.DDP_MESSAGE_TYPE_FAILED) {
+			} else if (message == DDPClient.DDP_MESSAGE_TYPE_FAILED) {
 				entity.Version = jObj [DDPClient.DDP_PROPS_VERSION].ToString();
 				entity.Type = DDPType.Failed;
 			}
