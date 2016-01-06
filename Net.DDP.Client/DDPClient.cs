@@ -51,19 +51,22 @@ namespace Net.DDP.Client
             _connector.Connect(url, useSSL);
         }
 
-        public void Call(string methodName, params object[] args)
+        public int Call(string methodName, params object[] args)
         {
-            string message = string.Format("\"msg\": \"method\",\"method\": \"{0}\",\"params\": {1},\"id\": \"{2}\"", methodName, CreateJSonArray(args), NextId());
+			var id = NextId ();
+            string message = string.Format("\"msg\": \"method\",\"method\": \"{0}\",\"params\": {1},\"id\": \"{2}\"", methodName, CreateJSonArray(args), id);
             message = "{" + message + "}";
             _connector.Send(message);
+			return id;
         }
 
         public int Subscribe(string subscribeTo, params string[] args)
         {
-            string message = string.Format("\"msg\": \"sub\",\"name\": \"{0}\",\"params\": [{1}],\"id\": \"{2}\"", subscribeTo, CreateJSonArray(args), NextId());
+			var id = NextId ();
+            string message = string.Format("\"msg\": \"sub\",\"name\": \"{0}\",\"params\": [{1}],\"id\": \"{2}\"", subscribeTo, CreateJSonArray(args), id);
             message = "{" + message + "}";
             _connector.Send(message);
-            return GetCurrentRequestId();
+            return id;
         }
 
         private string CreateJSonArray(params object[] args)
