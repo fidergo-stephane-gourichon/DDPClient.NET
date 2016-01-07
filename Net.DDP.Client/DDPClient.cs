@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace Net.DDP.Client
 {
@@ -56,6 +57,7 @@ namespace Net.DDP.Client
 			var id = NextId ();
             string message = string.Format("\"msg\": \"method\",\"method\": \"{0}\",\"params\": {1},\"id\": \"{2}\"", methodName, CreateJSonArray(args), id);
             message = "{" + message + "}";
+			Debug.WriteLine ("Sending message: " + message);
             _connector.Send(message);
 			return id;
         }
@@ -65,6 +67,7 @@ namespace Net.DDP.Client
 			var id = NextId ();
             string message = string.Format("\"msg\": \"sub\",\"name\": \"{0}\",\"params\": [{1}],\"id\": \"{2}\"", subscribeTo, CreateJSonArray(args), id);
             message = "{" + message + "}";
+			Debug.WriteLine ("Sending message: " + message);
             _connector.Send(message);
             return id;
         }
