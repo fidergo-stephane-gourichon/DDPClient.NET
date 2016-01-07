@@ -132,19 +132,15 @@ namespace Net.DDP.Client
 					JArray collection = (JArray) item.Value;
 					if (collection.Count == 0)
 						continue;
-					if (collection[0] is JObject) // ... of objects
-					{
-						var entityCollection =
-							(from JObject colObj in collection select GetMessageDataRecursive(colObj)).ToList();
-
-						entityAsCollection.Add(propertyName, entityCollection);
+					List<dynamic> entityCollection = new List<dynamic> ();
+					foreach (object element in collection) {
+						if (element is JObject) {
+							entityCollection.Add (GetMessageDataRecursive ((JObject) element));
+						} else {
+							entityCollection.Add (element.ToString ());
+						}
 					}
-					else // ... of strings
-					{
-						var strColl = collection.Select(colToken => colToken.ToString()).ToList();
-
-						entityAsCollection.Add(propertyName, strColl);
-					}
+					entityAsCollection.Add(propertyName, entityCollection);
 				}
 				else // Property is a string
 					entityAsCollection.Add(propertyName, item.Value.ToString());
@@ -152,5 +148,4 @@ namespace Net.DDP.Client
 
 			return entityAsCollection;
 		}
-	}
 }
