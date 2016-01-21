@@ -116,36 +116,36 @@ namespace Net.DDP.Client
 		}
 
 		private dynamic GetMessageDataRecursive(JObject json)
-		{
-			dynamic entity = new ExpandoObject();
-			var entityAsCollection = (IDictionary<string, object>) entity;
+        {
+            dynamic entity = new ExpandoObject ();
+            var entityAsCollection = (IDictionary<string, object>)entity;
 
-			if (json == null) return entityAsCollection;
+            if (json == null)
+                return entityAsCollection;
 
-			foreach (var item in json)
-			{
-				string propertyName = UppercaseFirst (item.Key);
-				if (item.Value is JObject) // Property is an object
-					entityAsCollection.Add(propertyName, (IDictionary<string, object>)GetMessageDataRecursive((JObject) item.Value));
-				else if (item.Value is JArray) // Property is an array...
-				{
-					JArray collection = (JArray) item.Value;
-					if (collection.Count == 0)
-						continue;
-					List<dynamic> entityCollection = new List<dynamic> ();
-					foreach (object element in collection) {
-						if (element is JObject) {
-							entityCollection.Add (GetMessageDataRecursive ((JObject) element));
-						} else {
-							entityCollection.Add (element.ToString ());
-						}
-					}
-					entityAsCollection.Add(propertyName, entityCollection);
-				}
-				else // Property is a string
-					entityAsCollection.Add(propertyName, item.Value.ToString());
-			}
+            foreach (var item in json) {
+                string propertyName = UppercaseFirst (item.Key);
+                if (item.Value is JObject) // Property is an object
+					entityAsCollection.Add (propertyName, (IDictionary<string, object>)GetMessageDataRecursive ((JObject)item.Value));
+                else if (item.Value is JArray) { // Property is an array...
+                    JArray collection = (JArray)item.Value;
+                    if (collection.Count == 0)
+                        continue;
+                    List<dynamic> entityCollection = new List<dynamic> ();
+                    foreach (object element in collection) {
+                        if (element is JObject) {
+                            entityCollection.Add (GetMessageDataRecursive ((JObject)element));
+                        } else {
+                            entityCollection.Add (element.ToString ());
+                        }
+                    }
+                    entityAsCollection.Add (propertyName, entityCollection);
+                } else // Property is a string
+					entityAsCollection.Add (propertyName, item.Value.ToString ());
+            }
 
-			return entityAsCollection;
-		}
+            return entityAsCollection;
+        }
+
+}
 }
