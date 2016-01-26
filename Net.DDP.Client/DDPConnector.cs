@@ -12,22 +12,23 @@ namespace Net.DDP.Client
     internal class DDPConnector
     {
         private WebSocket _socket;
+        private IObservable<DDPMessage> _socketStream;
         private string _url = string.Empty;
-        private int _isWait;
 
         public IObservable<DDPMessage> Connect (string url)
         {
             _url = url;
             _socket = new WebSocket (_url);
-            IObservable<DDPMessage> socketStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
-                                                       handler => _socket.MessageReceived += handler, 
-                                                       handler => _socket.MessageReceived -= handler)
+
+            _socketStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
+                handler => _socket.MessageReceived += handler, 
+                handler => _socket.MessageReceived -= handler)
                 .Select (pattern => DeserializeOrReturnErrorObject (pattern.EventArgs.Message));
+           
             _socket.Opened += _socket_Opened;
             _socket.Open ();
-            _isWait = 1;
 
-            return socketStream;
+            return _socketStream;
         }
 
         public void Close ()
@@ -44,14 +45,7 @@ namespace Net.DDP.Client
         void _socket_Opened (object sender, EventArgs e)
         {
             this.Send ("{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}");
-            _isWait = 0;
-        }
 
-        private void Wait ()
-        {
-            while (_isWait != 0 && _socket.State == WebSocketState.Connecting) {
-                System.Threading.Thread.Sleep (100);
-            }
         }
 
         private DDPMessage DeserializeOrReturnErrorObject (string jsonString)
@@ -68,6 +62,5 @@ namespace Net.DDP.Client
                 return ddpMessage;
             }
         }
-
     }
 }
