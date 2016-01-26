@@ -1,6 +1,11 @@
 ﻿using System;
 using WebSocket4Net;
 using System.Net.Sockets;
+using System.Reactive.Linq;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Reactive.Concurrency;
+using System.Threading;
 
 namespace Net.DDP.Client
 {
@@ -9,54 +14,58 @@ namespace Net.DDP.Client
         private WebSocket _socket;
         private string _url = string.Empty;
         private int _isWait;
-        private readonly IClient _client;
 
-        public DDPConnector(IClient client)
+        public IObservable<DDPMessage> Connect (string url)
         {
-            this._client = client;
-        }
-
-        public void Connect(string url, bool useSSL = true)
-        {
-            _url = string.Format("{0}://{1}/websocket", useSSL ? "wss" : "ws", url);
-            _socket = new WebSocket(_url);
-            _socket.MessageReceived += socket_MessageReceived;
+            _url = url;
+            _socket = new WebSocket (_url);
+            IObservable<DDPMessage> socketStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
+                                                       handler => _socket.MessageReceived += handler, 
+                                                       handler => _socket.MessageReceived -= handler)
+                .Select (pattern => DeserializeOrReturnErrorObject (pattern.EventArgs.Message));
             _socket.Opened += _socket_Opened;
-            _socket.Open();
+            _socket.Open ();
             _isWait = 1;
-            this.Wait();
-            if (_socket.State != WebSocketState.Open)
-            {
-                throw new SocketException();
-            }
+
+            return socketStream;
         }
 
-        public void Close()
+        public void Close ()
         {
-            _socket.Close();
+            _socket.Close ();
         }
 
-        public void Send(string message)
+        public void Send (string message)
         {
-            _socket.Send(message);
+            Debug.WriteLine ("Sending message: " + message + " on thread:  " + System.Threading.Thread.CurrentThread.ManagedThreadId);
+            _socket.Send (message);
         }
 
-        void _socket_Opened(object sender, EventArgs e)
+        void _socket_Opened (object sender, EventArgs e)
         {
-            this.Send("{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}");
+            this.Send ("{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}");
             _isWait = 0;
         }
 
-        void socket_MessageReceived(object sender, MessageReceivedEventArgs e)
+        private void Wait ()
         {
-            this._client.AddItem(e.Message);
+            while (_isWait != 0 && _socket.State == WebSocketState.Connecting) {
+                System.Threading.Thread.Sleep (100);
+            }
         }
 
-        private void Wait()
+        private DDPMessage DeserializeOrReturnErrorObject (string jsonString)
         {
-            while (_isWait != 0 && _socket.State == WebSocketState.Connecting)
-            {
-                System.Threading.Thread.Sleep(100);
+            try {
+                Debug.WriteLine ("Receiving message: " + jsonString + " on thread: " + System.Threading.Thread.CurrentThread.ManagedThreadId);
+                return JsonConvert.DeserializeObject<DDPMessage> (jsonString);
+            } catch (Exception e) {
+                Debug.WriteLine (e);
+                // Sacrificing thoroughness for the sake of simplicity here. Good tradeoff in this specific case.
+                var ddpMessage = new DDPMessage ();
+                ddpMessage.Type = DDPType.Error;
+                ddpMessage.Error = new Error (null, null, null, DDPErrorType.ClientError);
+                return ddpMessage;
             }
         }
 

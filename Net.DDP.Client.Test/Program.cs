@@ -1,56 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reactive.Linq;
+using System.Diagnostics;
+using System.Reactive.Concurrency;
 
 namespace Net.DDP.Client.Test
 {
     static class Program
     {
-        static void Main(string[] args)
+        static void Main (string[] args)
         {
-            // Testing by listing all atmosphere packages
-            DDPClient client = new DDPClient(new Subscriber());
-            client.Connect("atmosphere.meteor.com:443");
-            client.Subscribe("packages");
-            Console.ReadLine();
-        }
-    }
+            Debug.WriteLine ("Starting test run... on: " + System.Threading.Thread.CurrentThread.ManagedThreadId);
+            DDPClient client = new DDPClient ();
 
-    public class Subscriber : IDataSubscriber
-    {
-        // Atmosphere packages list
-        private readonly List<String> _packages = new List<String>();
-        public string Session { get; set; }
-        public void DataReceived(dynamic data)
-        {
-            try
-            {
-                // Handling connection to server
-                if (data.Type == DDPType.Connected)
-                {
-                    Session = data.Session;
-                    Console.WriteLine("Connected! Session id: " + Session);
-                }
-                else if (data.Type == DDPType.Added) // Handling added event
-                {
-                    _packages.Add(data.Name);
-                    Console.Write(data.Name + ", ");
-                }
-                else if (data.Type == DDPType.Changed) // Handling added event
-                {
-                    Console.WriteLine("Package " + data.Name + " was modified");
-                }
-                else if (data.Type == DDPType.Error)
-                {
-                    Console.WriteLine("Error: " + data.Error);
-                }
-                else if (data.Type == DDPType.Ready)
-                {
-                    Console.WriteLine("Collections " + data.RequestsIds[0] + " loaded!");
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine("Error trying to parse data");
+            client.Connect ("ws://192.168.99.100:3000/websocket").Do (m => Debug.WriteLine (m)).Where (
+                ddpMessage => DDPType.Connected.Equals (ddpMessage.Type)
+            ).Subscribe <DDPMessage> (m => Debug.WriteLine ("Received: " + m));
+
+
+
+//            client.Connect ("ws://192.168.99.100:3000/websocket").Subscribe<DDPMessage> (
+//                msg => {
+//                    Debug.WriteLine ("OK: " + msg);
+//                    Debug.WriteLine ("Observing on: " + System.Threading.Thread.CurrentThread.ManagedThreadId);
+//                },
+//                e => Debug.WriteLine (e)
+//            );
+
+            while (!"bye".Equals (System.Console.ReadLine ())) {
+                
             }
         }
     }

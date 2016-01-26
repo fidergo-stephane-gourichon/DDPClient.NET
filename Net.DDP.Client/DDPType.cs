@@ -8,8 +8,9 @@
         Removed,
         Error,
         Connected,
-        MethodResult,
-		Updated,
-		Failed
+        Result,
+        Updated,
+        Failed,
+        NoSub
     }
 }
