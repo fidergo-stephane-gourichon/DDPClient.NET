@@ -35,9 +35,11 @@ namespace Net.DDP.Client
         {
             ValidateUrl (url);
             rawStream = _connector.Connect (url);
-            return rawStream.Where (message => DDPType.Connected.Equals (message?.Type)
-            || DDPType.Failed.Equals (message.Type))
-                    .Do (m => Debug.WriteLine ("Connect response: " + m));
+            var obs = rawStream.Where (message => DDPType.Connected.Equals (message?.Type)
+                      || DDPType.Failed.Equals (message.Type)
+                      || DDPType.Error.Equals (message.Type)).Replay ();
+            obs.Connect ();
+            return obs;
         }
 
         public IObservable<DDPMessage> Call (string methodName, params object[] args)
@@ -47,8 +49,9 @@ namespace Net.DDP.Client
                                  methodName, CreateJSonArray (args), id);
             message = "{" + message + "}";
             _connector.Send (message);
-            return rawStream.Where (ddpMessage => IsRelatedToMethodCall (id, ddpMessage))
-                .Do (m => Debug.WriteLine ("Method call response: " + m));
+            var obs = rawStream.Where (ddpMessage => IsRelatedToMethodCall (id, ddpMessage)).Replay ();
+            obs.Connect ();
+            return obs;
         }
 
         public IObservable<DDPMessage> Subscribe (string subscribeTo, params object[] args)
@@ -58,13 +61,16 @@ namespace Net.DDP.Client
                                  subscribeTo, CreateJSonArray (args), id);
             message = "{" + message + "}";
             _connector.Send (message);
-            return rawStream.Where (ddpMessage => IsRelatedToSubscription (id, ddpMessage, subscribeTo))
-                .Do (m => Debug.WriteLine ("Subscription call response: " + m));
+            var obs = rawStream.Where (ddpMessage => IsRelatedToSubscription (id, ddpMessage, subscribeTo)).Replay ();
+            obs.Connect ();
+            return obs;
         }
 
         public IObservable<DDPMessage> GetCollectionStream (string collectionName)
         {
-            return rawStream.Where (ddpMessage => IsRelatedToCollection (collectionName, ddpMessage));
+            var obs = rawStream.Where (ddpMessage => IsRelatedToCollection (collectionName, ddpMessage)).Replay ();
+            obs.Connect ();
+            return obs;
         }
 
         private string CreateJSonArray (params object[] args)

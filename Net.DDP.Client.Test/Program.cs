@@ -10,6 +10,8 @@ namespace Net.DDP.Client.Test
 {
     class Program
     {
+        DDPClient client;
+
         static void Main (string[] args)
         {
 
@@ -20,11 +22,14 @@ namespace Net.DDP.Client.Test
         public void Play ()
         {
             Debug.WriteLine ("Starting test run... on: " + System.Threading.Thread.CurrentThread.ManagedThreadId);
-            DDPClient client = new DDPClient ();
+            client = new DDPClient ();
 
-            client.Connect ("ws://192.168.99.100:3000/websocket").Do (m => Debug.WriteLine (m)).Where (
-                ddpMessage => DDPType.Connected.Equals (ddpMessage.Type)
-            ).Subscribe <DDPMessage> (m => Debug.WriteLine ("Received: " + m));
+            client.Connect ("ws://192.168.99.100:3000/websocket")
+                .Subscribe <DDPMessage> (
+                m => Debug.WriteLine ("Received: " + m),
+                e => Debug.WriteLine ("Exception: " + e),
+                () => Debug.WriteLine ("OnCompleted")
+            );
 
 
 
@@ -51,7 +56,7 @@ namespace Net.DDP.Client.Test
                     }
 
                     if (!string.IsNullOrWhiteSpace (input)) {
-                        //                        chatClient.SendTextMessage (input, "GENERAL");
+//                        client._connector.Send (input);
                     }
 
                     inputTask = System.Console.In.ReadLineAsync ();
