@@ -56,7 +56,16 @@ namespace Net.DDP.Client.Test
                     }
 
                     if (!string.IsNullOrWhiteSpace (input)) {
-//                        client._connector.Send (input);
+
+                        if ("connect".Equals (input)) {
+                            client.Connect ("ws://192.168.99.100:3000/websocket")
+                                    .Subscribe <DDPMessage> (
+                                m => Debug.WriteLine ("Received: " + m),
+                                e => Debug.WriteLine ("Exception: " + e),
+                                () => Debug.WriteLine ("OnCompleted")
+                            );
+                        }
+                        client.Call (input);
                     }
 
                     inputTask = System.Console.In.ReadLineAsync ();
