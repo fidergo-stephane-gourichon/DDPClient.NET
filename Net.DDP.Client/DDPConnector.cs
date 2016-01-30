@@ -13,10 +13,13 @@ namespace Net.DDP.Client
 {
     internal class DDPConnector
     {
+        private const string ConnectDDPMessage = "{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}";
+
         private WebSocket _socket;
-        private IConnectableObservable<DDPMessage> _messageStream;
-        private Subject<DDPMessage> _errorStream;
-        private IObservable<DDPMessage> _mergedStream;
+        private IObservable<DDPMessage> _messageStream;
+        private IObservable<DDPMessage> _errorStream;
+        private IObservable<DDPMessage> _closedStream;
+        private IConnectableObservable<DDPMessage> _mergedStream;
 
         private string _url = string.Empty;
 
@@ -32,23 +35,30 @@ namespace Net.DDP.Client
             _messageStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
                 handler => _socket.MessageReceived += handler, 
                 handler => _socket.MessageReceived -= handler)
-				.Do (m => Debug.WriteLine ("T {0} - DDPClient - Incoming: {1}",
-                System.Threading.Thread.CurrentThread.ManagedThreadId, 
+				.Do (m => Debug.WriteLine ("T {0} - DDPClient - Incoming: {1}", Thread.CurrentThread.ManagedThreadId, 
                 m.EventArgs.Message))
-                .Select (rawMessage => DeserializeOrReturnErrorObject (rawMessage.EventArgs.Message))
-                .Publish ();
+                .Select (rawMessage => DeserializeOrReturnErrorObject (rawMessage.EventArgs.Message));
 
-            _errorStream = new Subject<DDPMessage> ();
+            _errorStream = Observable.FromEventPattern<ErrorEventArgs> (
+                handler => _socket.Error += handler, 
+                handler => _socket.Error -= handler)
+                .Do (m => Debug.WriteLine ("T {0} - DDPClient - Error: {1}", Thread.CurrentThread.ManagedThreadId, 
+                m.EventArgs.Exception))
+                .Select (m => BuildErrorDDPMessage ());
+
+            _closedStream = Observable.FromEventPattern (
+                handler => _socket.Closed += handler, 
+                handler => _socket.Closed -= handler)
+                .Do (m => Debug.WriteLine ("T {0} - DDPClient - Socket closed", Thread.CurrentThread.ManagedThreadId))
+                .SelectMany (m => Observable.Throw <DDPMessage> (new WebsocketConnectionException ("Websocket was closed")));
+
             _mergedStream = Observable.Merge (new IObservable<DDPMessage> [] {
-                _errorStream.AsObservable (),
-                _messageStream
-            });
+                _messageStream, _errorStream, _closedStream
+            }).Publish ();
 
             _socket.Opened += _socket_Opened;
-            _socket.Error += _socket_Error;
-            _socket.Closed += _socket_Closed;
 
-            _messageStream.Connect ();
+            _mergedStream.Connect ();
 
             _socket.Open ();
 
@@ -68,23 +78,7 @@ namespace Net.DDP.Client
 
         void _socket_Opened (object sender, EventArgs e)
         {
-            this.Send ("{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}");
-        }
-
-        void _socket_Closed (object sender, EventArgs e)
-        {
-            Debug.WriteLine ("Socket closed: " + e + " on " + System.Threading.Thread.CurrentThread.ManagedThreadId);
-            _errorStream.OnError (new WebsocketConnectionException ("Websocket was closed"));
-        }
-
-        void _socket_Error (object sender, ErrorEventArgs e)
-        {
-            Debug.WriteLine ("Socket error: " + e.Exception + " on " + System.Threading.Thread.CurrentThread.ManagedThreadId);
-            // Sacrificing thoroughness for the sake of simplicity here. Good tradeoff in this specific case.
-            var ddpMessage = new DDPMessage ();
-            ddpMessage.Type = DDPType.Error;
-            ddpMessage.Error = new Error (null, null, null, DDPErrorType.ClientError);
-            _errorStream.OnNext (ddpMessage);
+            this.Send (ConnectDDPMessage);
         }
 
         private DDPMessage DeserializeOrReturnErrorObject (string jsonString)
@@ -94,11 +88,16 @@ namespace Net.DDP.Client
             } catch (Exception e) {
                 Debug.WriteLine (e);
                 // Sacrificing thoroughness for the sake of simplicity here. Good tradeoff in this specific case.
-                var ddpMessage = new DDPMessage ();
-                ddpMessage.Type = DDPType.Error;
-                ddpMessage.Error = new Error (null, null, null, DDPErrorType.ClientError);
-                return ddpMessage;
+                return BuildErrorDDPMessage ();
             }
+        }
+
+        private DDPMessage BuildErrorDDPMessage ()
+        {
+            var ddpMessage = new DDPMessage ();
+            ddpMessage.Type = DDPType.Error;
+            ddpMessage.Error = new Error (null, null, null, DDPErrorType.ClientError);
+            return ddpMessage;
         }
     }
 }

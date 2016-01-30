@@ -35,11 +35,16 @@ namespace Net.DDP.Client
         {
             ValidateUrl (url);
             rawStream = _connector.Connect (url);
-            var obs = rawStream.Where (message => DDPType.Connected.Equals (message?.Type)
-                      || DDPType.Failed.Equals (message.Type)
-                      || DDPType.Error.Equals (message.Type)).Replay ();
+            var obs = rawStream.Where (message => IsConnectedOrFailedOrErrorType (message)).Replay ();
             obs.Connect ();
             return obs;
+        }
+
+        private bool IsConnectedOrFailedOrErrorType (DDPMessage m)
+        {
+            return DDPType.Connected.Equals (m?.Type)
+            || DDPType.Failed.Equals (m?.Type)
+            || DDPType.Error.Equals (m?.Type);
         }
 
         public IObservable<DDPMessage> Call (string methodName, params object[] args)

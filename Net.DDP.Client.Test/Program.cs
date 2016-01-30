@@ -60,12 +60,16 @@ namespace Net.DDP.Client.Test
                         if ("connect".Equals (input)) {
                             client.Connect ("ws://192.168.99.100:3000/websocket")
                                     .Subscribe <DDPMessage> (
-                                m => Debug.WriteLine ("Received: " + m),
-                                e => Debug.WriteLine ("Exception: " + e),
-                                () => Debug.WriteLine ("OnCompleted")
+                                m => Debug.WriteLine ("Received on console: " + m),
+                                e => Debug.WriteLine ("Exception on console: " + e),
+                                () => Debug.WriteLine ("OnCompleted on console")
                             );
                         }
-                        client.Call (input);
+                        client.Call (input).Subscribe <DDPMessage> (
+                            m => Debug.WriteLine ("Received on input: " + m),
+                            e => Debug.WriteLine ("Exception on input: " + e),
+                            () => Debug.WriteLine ("OnCompleted on input")
+                        );
                     }
 
                     inputTask = System.Console.In.ReadLineAsync ();
