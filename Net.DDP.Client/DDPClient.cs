@@ -43,6 +43,15 @@ namespace Net.DDP.Client
             }
         }
 
+        public void Close ()
+        {
+            lock (aLock) {
+                if (_connector != null) {
+                    _connector.Close ();
+                }
+            }
+        }
+
         private bool IsConnectedOrFailedOrErrorType (DDPMessage m)
         {
             return DDPType.Connected.Equals (m?.Type)
