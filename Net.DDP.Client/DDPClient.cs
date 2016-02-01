@@ -20,7 +20,8 @@ namespace Net.DDP.Client
         public const string DDP_PROPS_VERSION = "version";
 
         private static Random random = new Random ();
-        private static object randomLock = new Object ();
+        private static object randomLock = new object ();
+        private object aLock = new object ();
 
         private readonly DDPConnector _connector;
 
@@ -33,11 +34,13 @@ namespace Net.DDP.Client
 
         public IObservable<DDPMessage> Connect (string url)
         {
-            ValidateUrl (url);
-            rawStream = _connector.Connect (url);
-            var obs = rawStream.Where (message => IsConnectedOrFailedOrErrorType (message)).Replay ();
-            obs.Connect ();
-            return obs;
+            Validations.ValidateUrl (url);
+            lock (aLock) {
+                rawStream = _connector.Connect (url);
+                var obs = rawStream.Where (message => IsConnectedOrFailedOrErrorType (message)).Replay ();
+                obs.Connect ();
+                return obs;
+            }
         }
 
         private bool IsConnectedOrFailedOrErrorType (DDPMessage m)
@@ -111,15 +114,6 @@ namespace Net.DDP.Client
         private bool IsRelatedToCollection (string collection, DDPMessage message)
         {
             return collection != null && collection.Equals (message?.Collection);
-        }
-
-        private void  ValidateUrl (string url)
-        {
-            // TODO Strengthen this validation. The default Uri.IsWellFormedUriString won't handle ws/wss schemas.
-            if (string.IsNullOrWhiteSpace (url)
-                || (!url.StartsWith ("ws://") && !url.StartsWith ("wss://"))) {
-                throw new ArgumentException ("Invalid url: " + url, "url");
-            }
         }
     }
 }

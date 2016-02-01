@@ -68,6 +68,7 @@
     <Compile Include="Model\DDPMessageData.cs" />
     <Compile Include="DDPInternalType.cs" />
     <Compile Include="Exception\WebsocketConnectionException.cs" />
+    <Compile Include="Validations.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

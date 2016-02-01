@@ -27,13 +27,11 @@ namespace Net.DDP.Client
 
         public IObservable<DDPMessage> Connect (string url)
         {
-            if (string.IsNullOrWhiteSpace (url)) {
-                throw new ArgumentNullException ("url");
-            }
+            Validations.ValidateUrl (url);
 
             lock (aLock) {
 
-                Reset ();
+                Close ();
 
                 _url = url;
                 _socket = new WebSocket (_url);
@@ -109,17 +107,19 @@ namespace Net.DDP.Client
             return ddpMessage;
         }
 
-        private void Reset ()
+        public void Close ()
         {
-            if (_socket != null) {
-                var wsState = _socket.State;
-                if (!WebSocketState.Closing.Equals (wsState)
-                    && !WebSocketState.Closed.Equals (wsState)
-                    && !WebSocketState.None.Equals (wsState)) {
-                    Debug.WriteLine ("Closing socket " + _socket.GetHashCode ());
-                    _socket.Close ();    
-                } 
-                _socket = null;
+            lock (aLock) {
+                if (_socket != null) {
+                    var wsState = _socket.State;
+                    if (!WebSocketState.Closing.Equals (wsState)
+                        && !WebSocketState.Closed.Equals (wsState)
+                        && !WebSocketState.None.Equals (wsState)) {
+                        Debug.WriteLine ("Closing socket " + _socket.GetHashCode ());
+                        _socket.Close ();    
+                    } 
+                    _socket = null;
+                }
             }
         }
     }
