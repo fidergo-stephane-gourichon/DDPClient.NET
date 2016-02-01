@@ -29,6 +29,8 @@ namespace Net.DDP.Client
                 throw new ArgumentNullException ("url");
             }
 
+            Reset ();
+
             _url = url;
             _socket = new WebSocket (_url);
 
@@ -65,13 +67,12 @@ namespace Net.DDP.Client
             return _mergedStream;
         }
 
-        public void Close ()
-        {
-            _socket.Close ();
-        }
-
         public void Send (string message)
         {
+            if (message == null) {
+                throw new ArgumentNullException ("message");
+            }
+
             Debug.WriteLine ("T {0} - DDPClient - Outgoing: {1} ", System.Threading.Thread.CurrentThread.ManagedThreadId, message);
             _socket.Send (message);
         }
@@ -98,6 +99,19 @@ namespace Net.DDP.Client
             ddpMessage.Type = DDPType.Error;
             ddpMessage.Error = new Error (null, null, null, DDPErrorType.ClientError);
             return ddpMessage;
+        }
+
+        private void Reset ()
+        {
+            if (_socket != null) {
+                var wsState = _socket.State;
+                if (!WebSocketState.Closing.Equals (wsState)
+                    && !WebSocketState.Closed.Equals (wsState)
+                    && !WebSocketState.None.Equals (wsState)) {
+                    _socket.Close ();    
+                } 
+                _socket = null;
+            }
         }
     }
 }
