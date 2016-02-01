@@ -15,6 +15,8 @@ namespace Net.DDP.Client
     {
         private const string ConnectDDPMessage = "{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}";
 
+        private object aLock = new object ();
+
         private WebSocket _socket;
         private IObservable<DDPMessage> _messageStream;
         private IObservable<DDPMessage> _errorStream;
@@ -29,42 +31,45 @@ namespace Net.DDP.Client
                 throw new ArgumentNullException ("url");
             }
 
-            Reset ();
+            lock (aLock) {
 
-            _url = url;
-            _socket = new WebSocket (_url);
+                Reset ();
 
-            _messageStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
-                handler => _socket.MessageReceived += handler, 
-                handler => _socket.MessageReceived -= handler)
+                _url = url;
+                _socket = new WebSocket (_url);
+
+                _messageStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
+                    handler => _socket.MessageReceived += handler, 
+                    handler => _socket.MessageReceived -= handler)
 				.Do (m => Debug.WriteLine ("T {0} - DDPClient - Incoming: {1}", Thread.CurrentThread.ManagedThreadId, 
-                m.EventArgs.Message))
+                    m.EventArgs.Message))
                 .Select (rawMessage => DeserializeOrReturnErrorObject (rawMessage.EventArgs.Message));
 
-            _errorStream = Observable.FromEventPattern<ErrorEventArgs> (
-                handler => _socket.Error += handler, 
-                handler => _socket.Error -= handler)
+                _errorStream = Observable.FromEventPattern<ErrorEventArgs> (
+                    handler => _socket.Error += handler, 
+                    handler => _socket.Error -= handler)
                 .Do (m => Debug.WriteLine ("T {0} - DDPClient - Error: {1}", Thread.CurrentThread.ManagedThreadId, 
-                m.EventArgs.Exception))
+                    m.EventArgs.Exception))
                 .Select (m => BuildErrorDDPMessage ());
 
-            _closedStream = Observable.FromEventPattern (
-                handler => _socket.Closed += handler, 
-                handler => _socket.Closed -= handler)
+                _closedStream = Observable.FromEventPattern (
+                    handler => _socket.Closed += handler, 
+                    handler => _socket.Closed -= handler)
                 .Do (m => Debug.WriteLine ("T {0} - DDPClient - Socket closed", Thread.CurrentThread.ManagedThreadId))
                 .SelectMany (m => Observable.Throw <DDPMessage> (new WebsocketConnectionException ("Websocket was closed")));
 
-            _mergedStream = Observable.Merge (new IObservable<DDPMessage> [] {
-                _messageStream, _errorStream, _closedStream
-            }).Publish ();
+                _mergedStream = Observable.Merge (new IObservable<DDPMessage> [] {
+                    _messageStream, _errorStream, _closedStream
+                }).Publish ();
 
-            _socket.Opened += _socket_Opened;
+                _socket.Opened += _socket_Opened;
 
-            _mergedStream.Connect ();
+                _mergedStream.Connect ();
 
-            _socket.Open ();
+                _socket.Open ();
 
-            return _mergedStream;
+                return _mergedStream;
+            }
         }
 
         public void Send (string message)
@@ -72,12 +77,15 @@ namespace Net.DDP.Client
             if (message == null) {
                 throw new ArgumentNullException ("message");
             }
+            if (_socket == null || !WebSocketState.Open.Equals (_socket.State)) {
+                throw new InvalidOperationException ("The websocket connections is not opened and/or valid");
+            }
 
             Debug.WriteLine ("T {0} - DDPClient - Outgoing: {1} ", System.Threading.Thread.CurrentThread.ManagedThreadId, message);
             _socket.Send (message);
         }
 
-        void _socket_Opened (object sender, EventArgs e)
+        private void _socket_Opened (object sender, EventArgs e)
         {
             this.Send (ConnectDDPMessage);
         }
@@ -108,6 +116,7 @@ namespace Net.DDP.Client
                 if (!WebSocketState.Closing.Equals (wsState)
                     && !WebSocketState.Closed.Equals (wsState)
                     && !WebSocketState.None.Equals (wsState)) {
+                    Debug.WriteLine ("Closing socket " + _socket.GetHashCode ());
                     _socket.Close ();    
                 } 
                 _socket = null;
