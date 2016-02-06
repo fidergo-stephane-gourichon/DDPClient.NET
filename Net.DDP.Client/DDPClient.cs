@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Reactive.Linq;
 using System;
 using System.Threading;
+using System.Reactive.Subjects;
 
 namespace Net.DDP.Client
 {
@@ -66,7 +67,7 @@ namespace Net.DDP.Client
                                  methodName, CreateJSonArray (args), id);
             message = "{" + message + "}";
             _connector.Send (message);
-            var obs = rawStream.Where (ddpMessage => IsRelatedToMethodCall (id, ddpMessage)).Replay ();
+            var obs = rawStream.Where (ddpMessage => IsRelatedToMethodCall (id, ddpMessage)).Take (2).Replay ();
             obs.Connect ();
             return obs;
         }
