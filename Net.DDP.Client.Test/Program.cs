@@ -25,7 +25,7 @@ namespace Net.DDP.Client.Test
             Debug.WriteLine ("Starting test run... on: " + System.Threading.Thread.CurrentThread.ManagedThreadId);
             client = new DDPClient ();
 
-            client.Connect ("ws://192.168.99.100:3000/websocket")
+            client.Connect ("ws://192.168.56.1:3000/websocket")
                 .Subscribe <DDPMessage> (
                 m => Debug.WriteLine ("Received: " + m),
                 e => Debug.WriteLine ("Exception: " + e),

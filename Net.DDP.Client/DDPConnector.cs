@@ -13,8 +13,8 @@ namespace Net.DDP.Client
 {
     internal class DDPConnector
     {
-        private const string ConnectDDPMessage = "{\"msg\":\"connect\",\"version\":\"pre1\",\"support\":[\"pre1\"]}";
-
+        private const string ConnectDDPMessage = "{\"msg\":\"connect\",\"version\":\"1\",\"support\":[\"1\",\"pre2\",\"pre1\"]}";
+        //"{\"msg\":\"method\",\"method\":\"login\",\"params\":[{\"resume\":\"-FucQvb_BdhlwINJHXi09yxLvmNORiY8JVP8bj5QrH-\"}],\"id\":\"1\"}"
         private object aLock = new object ();
 
         private WebSocket _socket;
