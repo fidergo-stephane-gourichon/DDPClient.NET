@@ -14,6 +14,7 @@ namespace Net.DDP.Client.Test
 
         static void Main (string[] args)
         {
+            Trace.Listeners.Add(new ConsoleTraceListener());
 
             Program program = new Program ();
             program.Play ();
