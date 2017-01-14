@@ -95,6 +95,12 @@ namespace Net.DDP.Client
                 return DDPInternalType.Error;
             }
         }
+
+        public override string ToString()
+        {
+            return string.Format("[DDPMessage: Id={0}, Error={1}, Collection={2}, Type={3}, raw:{4}]", Id, Error, Collection, Type,
+            ((resultRaw != null) ? resultRaw.ToString() : "(no raw)") );
+        }
     }
 }
 
