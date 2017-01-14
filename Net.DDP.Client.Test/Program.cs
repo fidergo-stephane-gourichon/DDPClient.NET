@@ -64,36 +64,41 @@ namespace Net.DDP.Client.Test
                 if (inputTask.IsCompleted)
                 {
                     string input = inputTask.Result;
-
-                    if ("bye".Equals(input))
+                    try
                     {
-                        break;
-                    }
-
-                    if ("s".Equals(input))
-                    {
-                        client.Subscribe("parties");
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(input))
-                    {
-
-                        if ("connect".Equals(input))
+                        if ("bye".Equals(input))
                         {
-                            client.Connect("ws://192.168.99.100:3000/websocket")
-                                    .Subscribe<DDPMessage>(
-                                m => Debug.WriteLine("Received on console: " + m),
-                                e => Debug.WriteLine("Exception on console: " + e),
-                                () => Debug.WriteLine("OnCompleted on console")
+                            break;
+                        }
+
+                        if ("s".Equals(input))
+                        {
+                            client.Subscribe("parties");
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(input))
+                        {
+
+                            if ("connect".Equals(input))
+                            {
+                                client.Connect("ws://192.168.99.100:3000/websocket")
+                                        .Subscribe<DDPMessage>(
+                                    m => Debug.WriteLine("Received on console: " + m),
+                                    e => Debug.WriteLine("Exception on console: " + e),
+                                    () => Debug.WriteLine("OnCompleted on console")
+                                );
+                            }
+                            client.Call(input).Subscribe<DDPMessage>(
+                                m => Debug.WriteLine("Received on input: " + m),
+                                e => Debug.WriteLine("Exception on input: " + e),
+                                () => Debug.WriteLine("OnCompleted on input")
                             );
                         }
-                        client.Call(input).Subscribe<DDPMessage>(
-                            m => Debug.WriteLine("Received on input: " + m),
-                            e => Debug.WriteLine("Exception on input: " + e),
-                            () => Debug.WriteLine("OnCompleted on input")
-                        );
                     }
-
+                    catch (Exception ex)
+                    {
+                        Debug.Write("********************************** Got exception: " + ex);
+                    }
                     inputTask = System.Console.In.ReadLineAsync();
                 }
                 // Throttle the thread a little bit
