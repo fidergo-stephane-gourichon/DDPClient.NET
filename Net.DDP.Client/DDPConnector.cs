@@ -62,7 +62,9 @@ namespace Net.DDP.Client
                     handler => _socket.Error -= handler)
                 .Do (m => Debug.WriteLine ("T {0} - DDPClient - Error: {1}", Thread.CurrentThread.ManagedThreadId, 
                     m.EventArgs.Exception))
-                .Select (m => BuildErrorDDPMessage ());
+                .SelectMany(
+                    m => Observable.Throw<DDPMessage>(m.EventArgs.Exception)
+                    );
 
                 _closedStream = Observable.FromEventPattern (
                     handler => _socket.Closed += handler, 
