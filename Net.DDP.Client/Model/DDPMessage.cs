@@ -3,6 +3,9 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
+// Some fields are spotted by compiled as never used.  They are.
+// Probably accessed only through reflection by Newtonsoft.Json .
+#pragma warning disable 0649
 namespace Net.DDP.Client
 {
     public class DDPMessage
@@ -103,4 +106,3 @@ namespace Net.DDP.Client
         }
     }
 }
-
