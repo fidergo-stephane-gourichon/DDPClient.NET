@@ -44,7 +44,7 @@ namespace Net.DDP.Client.Test
 
         void OnDdpMessageReceived(DDPMessage ddpMsg)
         {
-            Debug.WriteLine("Received: " + ddpMsg.DDPMessageData);
+            Debug.WriteLine("Received on ddp connect: " + ddpMsg.DDPMessageData);
         }
 
         void OnDdpException(Exception ex)
