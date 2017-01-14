@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using System.IO;
+using System.Net.Sockets;
 
 namespace Net.DDP.Client.Test
 {
@@ -49,6 +50,11 @@ namespace Net.DDP.Client.Test
         void OnDdpException(Exception ex)
         {
             Debug.WriteLine("Exception: " + ex);
+            SocketException sex = ex as SocketException;
+            if (sex != null)
+            {
+                Debug.WriteLine("It's a socket exception with code: " + sex.SocketErrorCode);
+            }
         }
 
         void OnDdpCompleted()
