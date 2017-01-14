@@ -44,6 +44,8 @@ namespace Net.DDP.Client
             }
         }
 
+        //public string Url => _connector?.Url;
+
         public void Close ()
         {
             lock (aLock) {

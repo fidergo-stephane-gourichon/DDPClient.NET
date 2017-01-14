@@ -25,6 +25,8 @@ namespace Net.DDP.Client
 
         private string _url = string.Empty;
 
+        //public string Url => _url;
+
         public IObservable<DDPMessage> Connect (string url)
         {
             Validations.ValidateUrl (url);
