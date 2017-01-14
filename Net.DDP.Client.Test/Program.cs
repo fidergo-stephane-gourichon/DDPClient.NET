@@ -111,19 +111,19 @@ namespace Net.DDP.Client.Test
                         {
                             client.Subscribe("parties");
                         }
+                        
+                        else if ("connect".Equals(input))
+                        {
+                            client.Connect("ws://192.168.99.100:3000/websocket")
+                                    .Subscribe<DDPMessage>(
+                                m => Debug.WriteLine("Received on connect: " + m),
+                                e => Debug.WriteLine("Exception on connect: " + e),
+                                () => Debug.WriteLine("OnCompleted on connect")
+                            );
+                        }
 
                         else if (!string.IsNullOrWhiteSpace(input))
                         {
-
-                            if ("connect".Equals(input))
-                            {
-                                client.Connect("ws://192.168.99.100:3000/websocket")
-                                        .Subscribe<DDPMessage>(
-                                    m => Debug.WriteLine("Received on connect: " + m),
-                                    e => Debug.WriteLine("Exception on connect: " + e),
-                                    () => Debug.WriteLine("OnCompleted on connect")
-                                );
-                            }
                             client.Call(input).Subscribe<DDPMessage>(
                                 m => Debug.WriteLine("Received on Call: " + m),
                                 e => Debug.WriteLine("Exception on Call: " + e),
