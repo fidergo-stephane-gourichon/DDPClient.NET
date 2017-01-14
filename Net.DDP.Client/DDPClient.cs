@@ -106,14 +106,14 @@ namespace Net.DDP.Client
             }
         }
 
-        private bool IsRelatedToMethodCall (int id, DDPMessage message)
+        private static bool IsRelatedToMethodCall (int id, DDPMessage message)
         {
             return id.ToString ().Equals (message?.Id)
             || (DDPType.Updated.Equals (message?.Type)
             && message?.Methods != null && message.Methods.Contains (id.ToString ())); 
         }
 
-        private bool IsRelatedToSubscription (int id, DDPMessage message, string collection)
+        private static bool IsRelatedToSubscription (int id, DDPMessage message, string collection)
         {
             return id.ToString ().Equals (message?.Id)
             || (DDPType.Ready.Equals (message?.Type)
@@ -121,7 +121,7 @@ namespace Net.DDP.Client
             || (collection != null && collection.Equals (message?.Collection));
         }
 
-        private bool IsRelatedToCollection (string collection, DDPMessage message)
+        private static bool IsRelatedToCollection (string collection, DDPMessage message)
         {
             return collection != null && collection.Equals (message?.Collection);
         }
