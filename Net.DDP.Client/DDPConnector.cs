@@ -39,9 +39,21 @@ namespace Net.DDP.Client
                 _messageStream = Observable.FromEventPattern<MessageReceivedEventArgs> (
                     handler => _socket.MessageReceived += handler, 
                     handler => _socket.MessageReceived -= handler)
-				.Do (m => Debug.WriteLine ("T {0} - DDPClient - Incoming: {1}", Thread.CurrentThread.ManagedThreadId, 
-                    m.EventArgs.Message))
-                .Select (rawMessage => DeserializeOrReturnErrorObject (rawMessage.EventArgs.Message));
+                    .Select(epmrea => epmrea.EventArgs.Message)
+                    .Do(m => Debug.WriteLine("T {0} - DDPClient - Incoming: {1}", Thread.CurrentThread.ManagedThreadId,
+                   m))
+                   .Where(m => m != "{\"server_id\":\"0\"}") // https://forums.meteor.com/t/what-is-server-id-in-ddp/2061
+                   .Select(m =>
+                   {
+                       if (m == "{\"msg\":\"ping\"}")
+                       {
+                           Debug.WriteLine("Received ddp-level ping, replying with ddp-level pong.");
+                           this.Send("{\"msg\":\"pong\"}");
+                           return null;
+                       }
+                       return DeserializeOrReturnErrorObject(m);
+                   })
+                   .Where(m => m != null); // Don't notify for already handled messages like ddp-level ping.
 
                 _errorStream = Observable.FromEventPattern<ErrorEventArgs> (
                     handler => _socket.Error += handler, 
