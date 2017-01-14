@@ -73,17 +73,32 @@ namespace Net.DDP.Client.Test
 
                         else if ("l".Equals(input))
                         {
-                            client.Call("login", new { user = new { email = "a@b.c" }, password = "b" });
+                            client.Call("login", new { user = new { email = "a@b.c" }, password = "b" })
+                                        .Subscribe<DDPMessage>(
+                                    m => Debug.WriteLine("Received on login: " + m),
+                                    e => Debug.WriteLine("Exception on login: " + e),
+                                    () => Debug.WriteLine("OnCompleted on login")
+                                );
                         }
 
                         else if ("lwp".Equals(input))
                         {
-                            client.Call("login", new { user = new { email = "a@b.c" }, password = "wrongpassword" });
+                            client.Call("login", new { user = new { email = "a@b.c" }, password = "wrongpassword" })
+                                        .Subscribe<DDPMessage>(
+                                    m => Debug.WriteLine("Received on wrongpassword: " + m),
+                                    e => Debug.WriteLine("Exception on wrongpassword: " + e),
+                                    () => Debug.WriteLine("OnCompleted on wrongpassword")
+                                );
                         }
 
                         else if ("lwe".Equals(input))
                         {
-                            client.Call("login", new { user = new { email = "unknown@not.known" }, password = "wrongpassword" });
+                            client.Call("login", new { user = new { email = "unknown@not.known" }, password = "wrongpassword" })
+                                        .Subscribe<DDPMessage>(
+                                    m => Debug.WriteLine("Received on unknown user: " + m),
+                                    e => Debug.WriteLine("Exception on unknown user: " + e),
+                                    () => Debug.WriteLine("OnCompleted on unknown user")
+                                );
                         }
 
                         else if ("s".Equals(input))
@@ -98,15 +113,15 @@ namespace Net.DDP.Client.Test
                             {
                                 client.Connect("ws://192.168.99.100:3000/websocket")
                                         .Subscribe<DDPMessage>(
-                                    m => Debug.WriteLine("Received on console: " + m),
-                                    e => Debug.WriteLine("Exception on console: " + e),
-                                    () => Debug.WriteLine("OnCompleted on console")
+                                    m => Debug.WriteLine("Received on connect: " + m),
+                                    e => Debug.WriteLine("Exception on connect: " + e),
+                                    () => Debug.WriteLine("OnCompleted on connect")
                                 );
                             }
                             client.Call(input).Subscribe<DDPMessage>(
-                                m => Debug.WriteLine("Received on input: " + m),
-                                e => Debug.WriteLine("Exception on input: " + e),
-                                () => Debug.WriteLine("OnCompleted on input")
+                                m => Debug.WriteLine("Received on Call: " + m),
+                                e => Debug.WriteLine("Exception on Call: " + e),
+                                () => Debug.WriteLine("OnCompleted on Call")
                             );
                         }
                     }
