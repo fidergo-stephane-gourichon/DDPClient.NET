@@ -71,12 +71,12 @@ namespace Net.DDP.Client.Test
                             break;
                         }
 
-                        if ("s".Equals(input))
+                        else if ("s".Equals(input))
                         {
                             client.Subscribe("parties");
                         }
 
-                        if (!string.IsNullOrWhiteSpace(input))
+                        else if (!string.IsNullOrWhiteSpace(input))
                         {
 
                             if ("connect".Equals(input))
