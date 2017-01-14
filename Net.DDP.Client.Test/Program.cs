@@ -71,6 +71,21 @@ namespace Net.DDP.Client.Test
                             break;
                         }
 
+                        else if ("l".Equals(input))
+                        {
+                            client.Call("login", new { user = new { email = "a@b.c" }, password = "b" });
+                        }
+
+                        else if ("lwp".Equals(input))
+                        {
+                            client.Call("login", new { user = new { email = "a@b.c" }, password = "wrongpassword" });
+                        }
+
+                        else if ("lwe".Equals(input))
+                        {
+                            client.Call("login", new { user = new { email = "unknown@not.known" }, password = "wrongpassword" });
+                        }
+
                         else if ("s".Equals(input))
                         {
                             client.Subscribe("parties");
