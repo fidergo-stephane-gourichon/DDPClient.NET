@@ -29,6 +29,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SuperSocket.ClientEngine">
+      <HintPath>..\..\WebSocket4Net\bin\net45\Release\SuperSocket.ClientEngine.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -50,9 +53,6 @@
     </Reference>
     <Reference Include="System.Reactive.PlatformServices">
       <HintPath>..\packages\Rx-PlatformServices.2.2.5\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
-    </Reference>
-    <Reference Include="WebSocket4Net">
-      <HintPath>..\packages\WebSocket4Net.0.14.1\lib\net45\WebSocket4Net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -82,7 +82,9 @@
   </Target>
   -->
   <ItemGroup>
-    <Folder Include="Model\" />
-    <Folder Include="Exception\" />
+    <ProjectReference Include="..\..\WebSocket4Net\WebSocket4Net\WebSocket4Net.Net45.csproj">
+      <Project>{6920447f-76b1-4739-822e-9ce3a2882718}</Project>
+      <Name>WebSocket4Net.Net45</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

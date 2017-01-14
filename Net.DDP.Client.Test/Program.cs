@@ -26,11 +26,7 @@ namespace Net.DDP.Client.Test
             client = new DDPClient ();
 
             client.Connect ("ws://192.168.56.1:3000/websocket")
-                .Subscribe <DDPMessage> (
-                m => Debug.WriteLine ("Received: " + m),
-                e => Debug.WriteLine ("Exception: " + e),
-                () => Debug.WriteLine ("OnCompleted")
-            );
+                .Subscribe <DDPMessage> (OnDdpMessageReceived, OnDdpException, OnDdpCompleted);
 
 
 
@@ -45,6 +41,21 @@ namespace Net.DDP.Client.Test
             startUILoop ();
         }
 
+        void OnDdpMessageReceived(DDPMessage ddpMsg)
+        {
+            Debug.WriteLine("Received: " + ddpMsg.DDPMessageData);
+        }
+
+        void OnDdpException(Exception ex)
+        {
+            Debug.WriteLine("Exception: " + ex);
+        }
+
+        void OnDdpCompleted()
+        {
+            Debug.WriteLine("OnCompleted");
+        }
+
         public void startUILoop ()
         {
             Task<string> inputTask = System.Console.In.ReadLineAsync ();
@@ -52,8 +63,14 @@ namespace Net.DDP.Client.Test
                 if (inputTask.IsCompleted) {
                     string input = inputTask.Result;
 
-                    if ("bye".Equals (input)) {
+                    if ("bye".Equals(input))
+                    {
                         break;
+                    }
+
+                    if ("s".Equals(input))
+                    {
+                        client.Subscribe("parties");
                     }
 
                     if (!string.IsNullOrWhiteSpace (input)) {
